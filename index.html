@@ -76,7 +76,7 @@ let draggingIndex = null;
 let offsetX = 0;
 let offsetY = 0;
 
-function addBall(text = "") {
+window.addBall = function (text = "") {
     if (balls.length >= MAX_BALLS) {
         alert("Maximal 6 Bälle erlaubt!");
         return;
@@ -95,12 +95,12 @@ function addBall(text = "") {
     renderInputs();
 }
 
-function deleteBall(index) {
+window.deleteBall = function(index) {
     balls.splice(index, 1);
     renderInputs();
 }
 
-function updateText(index, value) {
+window.updateText = function(index, value) {
     balls[index].text = value;
 }
 
