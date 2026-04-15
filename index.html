@@ -58,7 +58,6 @@
 <canvas id="canvas" width="1000" height="300"></canvas>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {    
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -71,12 +70,12 @@ const colors = [
 
 const MAX_BALLS = 6;
 
-// Drag state
+// Drag
 let draggingIndex = null;
 let offsetX = 0;
 let offsetY = 0;
 
-window.addBall = function (text = "") {
+function addBall(text = "") {
     if (balls.length >= MAX_BALLS) {
         alert("Maximal 6 Bälle erlaubt!");
         return;
@@ -95,15 +94,16 @@ window.addBall = function (text = "") {
     renderInputs();
 }
 
-window.deleteBall = function(index) {
+function deleteBall(index) {
     balls.splice(index, 1);
     renderInputs();
 }
 
-window.updateText = function(index, value) {
+function updateText(index, value) {
     balls[index].text = value;
 }
 
+// INPUTS
 function renderInputs() {
     const container = document.getElementById("inputContainer");
     container.innerHTML = "";
@@ -224,13 +224,12 @@ canvas.addEventListener("mouseleave", () => {
     draggingIndex = null;
 });
 
-// Start
+// START
 addBall("Task 1");
 addBall("Task 2");
 addBall("Task 3");
 
 draw();
-});
 </script>
 
 </body>
