@@ -1,17 +1,85 @@
-<script defer>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Task Bälle</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: white;
+        text-align: center;
+    }
+
+    h2 {
+        margin-top: 20px;
+    }
+
+    #inputContainer {
+        margin: 10px;
+    }
+
+    input {
+        margin: 5px;
+        padding: 8px;
+        width: 150px;
+        border-radius: 6px;
+        border: none;
+    }
+
+    button {
+        padding: 10px 15px;
+        margin: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+
+    canvas {
+        display: block;
+        margin: 20px auto;
+        background: #111;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>Meine Aufgaben</h2>
+
+<div id="inputContainer"></div>
+
+<button onclick="addBall()">➕ Ball hinzufügen</button>
+
+<canvas id="canvas" width="1000" height="300"></canvas>
+
+<!-- ✅ SCRIPT IST HIER (WICHTIG!) -->
+<script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let balls = [];
-let draggingIndex = null;
 
-const colors = ["#FF5252","#FF9800","#FFEB3B","#4CAF50","#2196F3","#9C27B0","#00BCD4"];
+const colors = [
+    "#FF5252",
+    "#FF9800",
+    "#FFEB3B",
+    "#4CAF50",
+    "#2196F3",
+    "#9C27B0",
+    "#00BCD4"
+];
 
 function addBall(text = "") {
     balls.push({
         text: text,
         color: colors[balls.length % colors.length]
     });
+
     renderInputs();
     draw();
 }
@@ -22,6 +90,7 @@ function updateText(index, value) {
     } else {
         balls[index].text = value;
     }
+
     renderInputs();
     draw();
 }
@@ -33,38 +102,29 @@ function renderInputs() {
     balls.forEach((ball, i) => {
         const input = document.createElement("input");
         input.value = ball.text;
-        input.placeholder = "Ball " + (i+1);
+        input.placeholder = "Ball " + (i + 1);
         input.oninput = (e) => updateText(i, e.target.value);
         container.appendChild(input);
     });
 }
 
-function getBallX(i) {
-    const spacing = 160;
-    const startX = 100;
-    return startX + i * spacing;
-}
-
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    const spacing = 160;
+    const startX = 100;
     const y = 150;
 
     balls.forEach((ball, i) => {
-        let x = getBallX(i);
+        const x = startX + i * spacing;
 
-        // wenn gezogen → Mausposition
-        if (i === draggingIndex) {
-            x = currentMouseX;
-        }
-
-        ball.currentX = x;
-
+        // Kreis
         ctx.beginPath();
         ctx.arc(x, y, 50, 0, Math.PI * 2);
         ctx.fillStyle = ball.color;
         ctx.fill();
 
+        // Text
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -90,60 +150,19 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
             line = testLine;
         }
     }
+
     lines.push(line);
 
     for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], x, y - (lines.length/2 - i) * lineHeight);
+        ctx.fillText(lines[i], x, y - (lines.length / 2 - i) * lineHeight);
     }
 }
 
-// 🖱️ Drag Logic
-let currentMouseX = 0;
-
-canvas.addEventListener("mousedown", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    const y = 150;
-
-    balls.forEach((ball, i) => {
-        const dx = mouseX - getBallX(i);
-        const dy = mouseY - y;
-
-        if (Math.sqrt(dx*dx + dy*dy) < 50) {
-            draggingIndex = i;
-        }
-    });
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    if (draggingIndex !== null) {
-        const rect = canvas.getBoundingClientRect();
-        currentMouseX = e.clientX - rect.left;
-        draw();
-    }
-});
-
-canvas.addEventListener("mouseup", () => {
-    if (draggingIndex !== null) {
-
-        // neue Position berechnen
-        const newIndex = Math.round((currentMouseX - 100) / 160);
-        const clampedIndex = Math.max(0, Math.min(balls.length - 1, newIndex));
-
-        const movedBall = balls.splice(draggingIndex, 1)[0];
-        balls.splice(clampedIndex, 0, movedBall);
-
-        draggingIndex = null;
-
-        renderInputs();
-        draw();
-    }
-});
-
-// Start
-addBall(Task 1);
-addBall(Task 2);
-addBall(Task 3);
+// Startwerte
+addBall("Task 1");
+addBall("Task 2");
+addBall("Task 3");
 </script>
+
+</body>
+</html>
