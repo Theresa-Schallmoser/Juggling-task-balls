@@ -127,7 +127,10 @@ function renderInputs() {
 }
 
 // DRAW LOOP   
-function draw() {
+    
+    document.fonts.ready.then(() => {
+    
+    function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     balls.forEach((ball) => {
@@ -157,8 +160,10 @@ function draw() {
     });
 
     requestAnimationFrame(draw);
-}
+    }
 
+}
+        
 // TEXT WRAP (SCHWARZ FIX)
 function wrapText(text, x, y, maxWidth, lineHeight) {
     ctx.fillStyle = "black";
