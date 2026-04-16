@@ -151,7 +151,7 @@ function draw() {
         if (ball.text.length > 20) fontSize = 12;
         if (ball.text.length > 30) fontSize = 10;
 
-        ctx.font = `bold ${fontSize}px Arial`;
+        ctx.font = `bold ${fontSize}px 'PT Sans'`;
 
         wrapText(ball.text, ball.x, ball.y, radius * 1.5, fontSize + 2);
     });
