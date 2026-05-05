@@ -13,13 +13,9 @@
         text-align: center;
     }
 
-    h2 {
-        margin-top: 20px;
-    }
+    h2 { margin-top: 20px; }
 
-    #inputContainer {
-        margin: 10px;
-    }
+    #inputContainer { margin: 10px; }
 
     input {
         margin: 5px;
@@ -50,11 +46,8 @@
 <body>
 
 <h2>Meine Aufgaben</h2>
-
 <div id="inputContainer"></div>
-
 <button onclick="addBall()">➕ Ball hinzufügen</button>
-
 <canvas id="canvas" width="1000" height="300"></canvas>
 
 <script>
@@ -62,15 +55,15 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let balls = [];
+let particles = [];
 
 const colors = [
-    "#FF5252", "#FF9800", "#FFEB3B",
-    "#4CAF50", "#2196F3", "#9C27B0", "#00BCD4"
+    "#FF5252","#FF9800","#FFEB3B",
+    "#4CAF50","#2196F3","#9C27B0","#00BCD4"
 ];
 
 const MAX_BALLS = 6;
 
-// Drag
 let draggingIndex = null;
 let offsetX = 0;
 let offsetY = 0;
@@ -88,13 +81,32 @@ function addBall(text = "") {
         color: colors[i % colors.length],
         x: 100 + i * 160,
         y: 150,
-        scale: 0.2
+        scale: 0.2,
+        popping: false
     });
 
     renderInputs();
 }
 
+// 💥 POP EFFECT
+function createPopEffect(ball) {
+    for (let i = 0; i < 25; i++) {
+        particles.push({
+            x: ball.x,
+            y: ball.y,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            size: Math.random() * 6 + 2,
+            life: 30,
+            color: ball.color
+        });
+    }
+}
+
 function deleteBall(index) {
+    const ball = balls[index];
+    createPopEffect(ball);
+
     balls.splice(index, 1);
     renderInputs();
 }
@@ -103,7 +115,6 @@ function updateText(index, value) {
     balls[index].text = value;
 }
 
-// INPUTS
 function renderInputs() {
     const container = document.getElementById("inputContainer");
     container.innerHTML = "";
@@ -126,25 +137,21 @@ function renderInputs() {
     });
 }
 
-// DRAW LOOP   
- 
-    function draw() {
+// DRAW LOOP
+function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // BALLS
     balls.forEach((ball) => {
-
-        // Animation
         ball.scale += (1 - ball.scale) * 0.1;
 
         const radius = 50 * ball.scale;
 
-        // Kreis
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
         ctx.fillStyle = ball.color;
         ctx.fill();
 
-        // TEXT
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
@@ -153,15 +160,33 @@ function renderInputs() {
         if (ball.text.length > 30) fontSize = 10;
 
         ctx.font = `bold ${fontSize}px 'PT Sans'`;
-
         wrapText(ball.text, ball.x, ball.y, radius * 1.5, fontSize + 2);
     });
 
-    requestAnimationFrame(draw);
-    }
+    // 💥 PARTICLES
+    particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
 
-        
-// TEXT WRAP (SCHWARZ FIX)
+        ctx.globalAlpha = p.life / 30;
+        ctx.fillStyle = p.color;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+
+        if (p.life <= 0) {
+            particles.splice(i, 1);
+        }
+    });
+
+    requestAnimationFrame(draw);
+}
+
+// TEXT WRAP
 function wrapText(text, x, y, maxWidth, lineHeight) {
     ctx.fillStyle = "black";
 
@@ -192,7 +217,7 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
     }
 }
 
-// DRAG & DROP
+// DRAG
 canvas.addEventListener("mousedown", (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
@@ -218,13 +243,8 @@ canvas.addEventListener("mousemove", (e) => {
     balls[draggingIndex].y = e.clientY - rect.top - offsetY;
 });
 
-canvas.addEventListener("mouseup", () => {
-    draggingIndex = null;
-});
-
-canvas.addEventListener("mouseleave", () => {
-    draggingIndex = null;
-});
+canvas.addEventListener("mouseup", () => draggingIndex = null);
+canvas.addEventListener("mouseleave", () => draggingIndex = null);
 
 // START
 addBall("Task 1");
