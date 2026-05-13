@@ -14,13 +14,9 @@
         text-align: center;
     }
 
-    h2 {
-        margin-top: 20px;
-    }
+    h2 { margin-top: 20px; }
 
-    #inputContainer {
-        margin: 10px;
-    }
+    #inputContainer { margin: 10px; }
 
     input, select {
         margin: 5px;
@@ -55,6 +51,7 @@
 <div id="inputContainer"></div>
 
 <button onclick="addBall()">➕ Ball hinzufügen</button>
+<button onclick="resetStorage()" style="background:#e53935;">🗑 Reset</button>
 
 <canvas id="canvas" width="1000" height="300"></canvas>
 
@@ -66,13 +63,8 @@ let balls = [];
 let particles = [];
 
 const colors = [
-    "#FF5252",
-    "#FF9800",
-    "#FFEB3B",
-    "#4CAF50",
-    "#2196F3",
-    "#9C27B0",
-    "#00BCD4"
+    "#FF5252","#FF9800","#FFEB3B",
+    "#4CAF50","#2196F3","#9C27B0","#00BCD4"
 ];
 
 const MAX_BALLS = 6;
@@ -81,7 +73,18 @@ let draggingIndex = null;
 let offsetX = 0;
 let offsetY = 0;
 
-// BALL HINZUFÜGEN
+/* =========================
+   SPEICHERUNG
+========================= */
+
+function saveBalls() {
+    localStorage.setItem("taskBalls", JSON.stringify(balls));
+}
+
+/* =========================
+   BALL HINZUFÜGEN
+========================= */
+
 function addBall(text = "") {
 
     if (balls.length >= MAX_BALLS) {
@@ -97,34 +100,33 @@ function addBall(text = "") {
         x: 100 + i * 160,
         y: 150,
         scale: 0.2,
-        size: "mittel", // NEU
+        size: "mittel",
         popping: false
     });
 
     renderInputs();
+    saveBalls();
 }
 
-// BALL-GRÖSSE
+/* =========================
+   GRÖSSE
+========================= */
+
 function getBallRadius(ball) {
 
     let baseRadius = 50;
 
-    if (ball.size === "klein") {
-        baseRadius = 35;
-    }
-
-    if (ball.size === "mittel") {
-        baseRadius = 50;
-    }
-
-    if (ball.size === "groß") {
-        baseRadius = 70;
-    }
+    if (ball.size === "klein") baseRadius = 35;
+    if (ball.size === "mittel") baseRadius = 50;
+    if (ball.size === "groß") baseRadius = 70;
 
     return baseRadius * ball.scale;
 }
 
-// 💥 POP EFFECT
+/* =========================
+   POP EFFECT
+========================= */
+
 function createPopEffect(ball) {
 
     for (let i = 0; i < 25; i++) {
@@ -141,7 +143,10 @@ function createPopEffect(ball) {
     }
 }
 
-// LÖSCHEN
+/* =========================
+   DELETE
+========================= */
+
 function deleteBall(index) {
 
     const ball = balls[index];
@@ -151,19 +156,27 @@ function deleteBall(index) {
     balls.splice(index, 1);
 
     renderInputs();
+    saveBalls();
 }
 
-// TEXT ÄNDERN
+/* =========================
+   UPDATE TEXT / SIZE
+========================= */
+
 function updateText(index, value) {
     balls[index].text = value;
+    saveBalls();
 }
 
-// GRÖSSE ÄNDERN
 function updateSize(index, value) {
     balls[index].size = value;
+    saveBalls();
 }
 
-// INPUTS ZEICHNEN
+/* =========================
+   INPUTS
+========================= */
+
 function renderInputs() {
 
     const container = document.getElementById("inputContainer");
@@ -174,42 +187,28 @@ function renderInputs() {
 
         const wrapper = document.createElement("div");
 
-        // TEXT INPUT
         const input = document.createElement("input");
-
         input.value = ball.text;
         input.placeholder = "Ball " + (i + 1);
+        input.oninput = (e) => updateText(i, e.target.value);
 
-        input.oninput = (e) => {
-            updateText(i, e.target.value);
-        };
-
-        // GRÖSSEN AUSWAHL
         const select = document.createElement("select");
 
         ["klein", "mittel", "groß"].forEach(size => {
 
             const option = document.createElement("option");
-
             option.value = size;
             option.textContent = size;
 
-            if (ball.size === size) {
-                option.selected = true;
-            }
+            if (ball.size === size) option.selected = true;
 
             select.appendChild(option);
         });
 
-        select.onchange = (e) => {
-            updateSize(i, e.target.value);
-        };
+        select.onchange = (e) => updateSize(i, e.target.value);
 
-        // LÖSCH BUTTON
         const del = document.createElement("button");
-
         del.textContent = "❌";
-
         del.onclick = () => deleteBall(i);
 
         wrapper.appendChild(input);
@@ -220,113 +219,83 @@ function renderInputs() {
     });
 }
 
-// DRAW LOOP
+/* =========================
+   DRAW LOOP
+========================= */
+
 function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // BÄLLE
     balls.forEach((ball) => {
 
         ball.scale += (1 - ball.scale) * 0.1;
 
         const radius = getBallRadius(ball);
 
-        // BALL
         ctx.beginPath();
-
         ctx.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
-
         ctx.fillStyle = ball.color;
-
         ctx.fill();
 
-        // TEXT
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
         let fontSize = 14;
 
-        if (ball.size === "groß") {
-            fontSize = 18;
-        }
+        if (ball.size === "groß") fontSize = 18;
+        if (ball.size === "klein") fontSize = 11;
 
-        if (ball.size === "klein") {
-            fontSize = 11;
-        }
-
-        if (ball.text.length > 20) {
-            fontSize -= 2;
-        }
-
-        if (ball.text.length > 30) {
-            fontSize -= 2;
-        }
+        if (ball.text.length > 20) fontSize -= 2;
+        if (ball.text.length > 30) fontSize -= 2;
 
         ctx.font = `bold ${fontSize}px 'PT Sans'`;
 
-        wrapText(
-            ball.text,
-            ball.x,
-            ball.y,
-            radius * 1.5,
-            fontSize + 2
-        );
+        wrapText(ball.text, ball.x, ball.y, radius * 1.5, fontSize + 2);
     });
 
-    // 💥 PARTICLES
     particles.forEach((p, i) => {
 
         p.x += p.vx;
         p.y += p.vy;
-
         p.life--;
 
         ctx.globalAlpha = p.life / 30;
-
         ctx.fillStyle = p.color;
 
         ctx.beginPath();
-
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-
         ctx.fill();
 
         ctx.globalAlpha = 1;
 
-        if (p.life <= 0) {
-            particles.splice(i, 1);
-        }
+        if (p.life <= 0) particles.splice(i, 1);
     });
 
     requestAnimationFrame(draw);
 }
 
-// TEXT WRAP
+/* =========================
+   TEXT WRAP
+========================= */
+
 function wrapText(text, x, y, maxWidth, lineHeight) {
 
     ctx.fillStyle = "black";
 
     const words = text.split(" ");
-
     let line = "";
-
     let lines = [];
 
     for (let n = 0; n < words.length; n++) {
 
         let testLine = line + words[n] + " ";
-
         let testWidth = ctx.measureText(testLine).width;
 
         if (testWidth > maxWidth && n > 0) {
-
             lines.push(line);
-
             line = words[n] + " ";
-
         } else {
-
             line = testLine;
         }
     }
@@ -334,20 +303,17 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
     lines.push(line);
 
     for (let i = 0; i < lines.length; i++) {
-
-        ctx.fillText(
-            lines[i],
-            x,
-            y - (lines.length / 2 - i) * lineHeight
-        );
+        ctx.fillText(lines[i], x, y - (lines.length / 2 - i) * lineHeight);
     }
 }
 
-// DRAG START
+/* =========================
+   DRAG & DROP
+========================= */
+
 canvas.addEventListener("mousedown", (e) => {
 
     const rect = canvas.getBoundingClientRect();
-
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
 
@@ -356,19 +322,15 @@ canvas.addEventListener("mousedown", (e) => {
         const dx = mx - ball.x;
         const dy = my - ball.y;
 
-        const radius = getBallRadius(ball);
-
-        if (Math.sqrt(dx * dx + dy * dy) < radius) {
+        if (Math.sqrt(dx * dx + dy * dy) < getBallRadius(ball)) {
 
             draggingIndex = i;
-
             offsetX = dx;
             offsetY = dy;
         }
     });
 });
 
-// DRAG MOVE
 canvas.addEventListener("mousemove", (e) => {
 
     if (draggingIndex === null) return;
@@ -382,8 +344,10 @@ canvas.addEventListener("mousemove", (e) => {
         e.clientY - rect.top - offsetY;
 });
 
-// DRAG ENDE
 canvas.addEventListener("mouseup", () => {
+
+    if (draggingIndex !== null) saveBalls();
+
     draggingIndex = null;
 });
 
@@ -391,12 +355,36 @@ canvas.addEventListener("mouseleave", () => {
     draggingIndex = null;
 });
 
-// START
-addBall("Task 1");
-addBall("Task 2");
-addBall("Task 3");
+/* =========================
+   RESET
+========================= */
 
+function resetStorage() {
+
+    localStorage.removeItem("taskBalls");
+    location.reload();
+}
+
+/* =========================
+   START (LOAD)
+========================= */
+
+const saved = localStorage.getItem("taskBalls");
+
+if (saved) {
+
+    balls = JSON.parse(saved);
+
+} else {
+
+    addBall("Task 1");
+    addBall("Task 2");
+    addBall("Task 3");
+}
+
+renderInputs();
 draw();
+
 </script>
 
 </body>
