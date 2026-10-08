@@ -57,7 +57,12 @@
 
     h1 { margin: 0; font-size: 24px; }
 
-    #sidebarBtn { padding: 8px 12px; font-size: 14px; }
+    .header-actions { display: flex; gap: 8px; align-self: center; }
+    .header-actions .btn { padding: 8px 12px; font-size: 14px; }
+
+    /* Schnell-Button nur bei zugeklappter Leiste */
+    #quickAddBtn { display: none; }
+    body.sidebar-hidden #quickAddBtn { display: inline-block; }
 
     #date {
         color: var(--muted);
@@ -227,7 +232,10 @@
 
 <header>
     <h1>Meine Aufgaben <span id="date"></span></h1>
-    <button class="btn secondary" id="sidebarBtn" aria-expanded="true">Leiste ausblenden ⇥</button>
+    <div class="header-actions">
+        <button class="btn" id="quickAddBtn" title="Neuen Ball anlegen">➕ Ball</button>
+        <button class="btn secondary" id="sidebarBtn" aria-expanded="true">Leiste ausblenden ⇥</button>
+    </div>
 </header>
 
 <main>
@@ -634,6 +642,9 @@ function updateStats() {
     const full = open >= MAX_BALLS;
 
     document.getElementById("addBtn").disabled = full;
+    const quick = document.getElementById("quickAddBtn");
+    quick.disabled = full;
+    quick.title = full ? "Maximal 6 Bälle" : "Neuen Ball anlegen";
     document.getElementById("limitHint").textContent = full
         ? "Maximal 6 Bälle – erst etwas erledigen 😉"
         : `Noch ${MAX_BALLS - open} ${MAX_BALLS - open === 1 ? "Platz" : "Plätze"} frei`;
@@ -992,6 +1003,13 @@ canvas.addEventListener("pointercancel", endDrag);
 document.getElementById("addBtn").onclick = () => addBall("", true);
 document.getElementById("resetBtn").onclick = resetAll;
 document.getElementById("undoBtn").onclick = undo;
+// Schnell-Button: Leiste öffnen, Ball anlegen, direkt ins Textfeld
+document.getElementById("quickAddBtn").onclick = () => {
+    state.sidebarHidden = false;
+    updateSidebar();
+    save();
+    addBall("", true);
+};
 document.getElementById("sidebarBtn").onclick = () => {
     state.sidebarHidden = !state.sidebarHidden;
     if (state.sidebarHidden) focusedId = null;
