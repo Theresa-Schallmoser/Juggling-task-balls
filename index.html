@@ -17,7 +17,22 @@
         --accent: #4CAF50;
     }
 
-    * { box-sizing: border-box; }
+    /* dunkle Browser-Elemente (Scrollbars, Auswahllisten) */
+    :root { color-scheme: dark; }
+
+    * {
+        box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a3a transparent;
+    }
+
+    *:hover { scrollbar-color: #555 transparent; }
+
+    /* Fallback für ältere Browser */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
 
     html, body { height: 100%; }
 
@@ -42,6 +57,8 @@
 
     h1 { margin: 0; font-size: 24px; }
 
+    #sidebarBtn { padding: 8px 12px; font-size: 14px; }
+
     #date {
         color: var(--muted);
         font-size: 15px;
@@ -52,13 +69,17 @@
     main {
         flex: 1;
         display: grid;
-        grid-template-columns: 380px 1fr;
+        grid-template-columns: 1fr 380px;
         min-height: 0;
     }
 
+    body.sidebar-hidden main { grid-template-columns: 1fr; }
+    body.sidebar-hidden aside { display: none; }
+
     aside {
+        order: 2;
         background: var(--panel);
-        border-right: 1px solid var(--line);
+        border-left: 1px solid var(--line);
         padding: 16px;
         display: flex;
         flex-direction: column;
@@ -196,7 +217,8 @@
     @media (max-width: 800px) {
         body { height: auto; min-height: 100%; }
         main { flex: none; grid-template-columns: 1fr; grid-template-rows: auto 460px; }
-        aside { border-right: none; border-bottom: 1px solid var(--line); }
+        body.sidebar-hidden main { grid-template-rows: 460px; }
+        aside { order: 0; border-left: none; border-bottom: 1px solid var(--line); }
     }
 </style>
 </head>
@@ -205,6 +227,7 @@
 
 <header>
     <h1>Meine Aufgaben <span id="date"></span></h1>
+    <button class="btn secondary" id="sidebarBtn" aria-expanded="true">Leiste ausblenden ⇥</button>
 </header>
 
 <main>
@@ -244,7 +267,7 @@ const STORAGE_KEY = "taskBalls.v2";
 const LEGACY_KEY = "taskBalls";
 const FONT = "'PT Sans', Arial, sans-serif";
 
-let state = { showZones: false, balls: [] };
+let state = { showZones: false, sidebarHidden: false, balls: [] };
 let particles = [];
 let W = 1, H = 1, dpr = 1;
 let drag = null;
@@ -317,6 +340,7 @@ function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             version: 2,
             showZones: state.showZones,
+            sidebarHidden: state.sidebarHidden,
             balls: state.balls.map(({ id, text, color, x, y, size }) => ({ id, text, color, x, y, size }))
         }));
     } catch (e) { /* Speicher nicht verfügbar – App läuft trotzdem */ }
@@ -358,6 +382,7 @@ function load() {
     if (data && Array.isArray(data.balls)) {
         state.balls = data.balls.slice(0, MAX_BALLS).map(normalizeBall);
         state.showZones = !!data.showZones;
+        state.sidebarHidden = !!data.sidebarHidden;
 
         // doppelte Farben auflösen
         const used = new Set();
@@ -612,6 +637,14 @@ function updateStats() {
     document.getElementById("limitHint").textContent = full
         ? "Maximal 6 Bälle – erst etwas erledigen 😉"
         : `Noch ${MAX_BALLS - open} ${MAX_BALLS - open === 1 ? "Platz" : "Plätze"} frei`;
+}
+
+function updateSidebar() {
+    const hidden = state.sidebarHidden;
+    document.body.classList.toggle("sidebar-hidden", hidden);
+    const btn = document.getElementById("sidebarBtn");
+    btn.textContent = hidden ? "⇤ Leiste einblenden" : "Leiste ausblenden ⇥";
+    btn.setAttribute("aria-expanded", String(!hidden));
 }
 
 function updateZonesButton() {
@@ -959,6 +992,12 @@ canvas.addEventListener("pointercancel", endDrag);
 document.getElementById("addBtn").onclick = () => addBall("", true);
 document.getElementById("resetBtn").onclick = resetAll;
 document.getElementById("undoBtn").onclick = undo;
+document.getElementById("sidebarBtn").onclick = () => {
+    state.sidebarHidden = !state.sidebarHidden;
+    if (state.sidebarHidden) focusedId = null;
+    updateSidebar();
+    save();
+};
 document.getElementById("zonesBtn").onclick = () => {
     state.showZones = !state.showZones;
     updateZonesButton();
@@ -974,6 +1013,7 @@ resize();
 load();
 renderList();
 updateZonesButton();
+updateSidebar();
 
 // nach dem Laden der Schrift Textmaße neu berechnen
 if (document.fonts) document.fonts.ready.then(() => textCache.clear());
